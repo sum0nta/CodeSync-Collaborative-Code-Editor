@@ -247,6 +247,53 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUserInfo = async (userData) => {
+    try {
+      const response = await fetch('http://localhost:5001/api/user/info', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        return { success: true, data };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { success: false, message: 'Network error' };
+    }
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      const response = await fetch('http://localhost:5001/api/user/password', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { success: false, message: 'Network error' };
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -256,7 +303,9 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     verifySecurityQuestions,
     resetPasswordConfirm,
-    updateProfile
+    updateProfile,
+    updateUserInfo,
+    changePassword
   };
 
   return (

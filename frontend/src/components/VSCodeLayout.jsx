@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import MessagePanel from './MessagePanel';
 import SyntaxAwareEditor from './SyntaxAwareEditor';
 import ErrorPanel from './ErrorPanel';
+import ProfileManagement from './ProfileManagement';
 import { io } from 'socket.io-client';
 
 const VSCodeLayout = () => {
@@ -15,6 +16,7 @@ const VSCodeLayout = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showMessagePanel, setShowMessagePanel] = useState(false);
   const [showErrorPanel, setShowErrorPanel] = useState(false);
+  const [showProfileManagement, setShowProfileManagement] = useState(false);
   const [validationState, setValidationState] = useState({ errors: 0, warnings: 0, markers: [] });
   const autoSaveTimeoutRef = useRef(null);
   const editorRef = useRef(null);
@@ -660,6 +662,26 @@ const VSCodeLayout = () => {
           >
             📊 Status
           </button>
+          <button
+            onClick={() => setShowProfileManagement(true)}
+            style={{
+              backgroundColor: '#404040',
+              border: 'none',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
+            onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
+            title="Manage profile"
+          >
+            👤 Profile
+          </button>
           <span style={{ color: '#888', fontSize: '12px' }}>Welcome, {user?.username || user?.email}</span>
           <button
             onClick={() => {
@@ -822,6 +844,13 @@ const VSCodeLayout = () => {
           }
         }}
       />
+
+      {/* Profile Management */}
+      {showProfileManagement && (
+        <ProfileManagement
+          onClose={() => setShowProfileManagement(false)}
+        />
+      )}
     </div>
   );
 };
