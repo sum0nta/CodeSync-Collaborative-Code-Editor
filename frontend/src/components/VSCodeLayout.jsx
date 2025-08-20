@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import MessagePanel from './MessagePanel';
 import SyntaxAwareEditor from './SyntaxAwareEditor';
 import ErrorPanel from './ErrorPanel';
+import { io } from 'socket.io-client';
 
 const VSCodeLayout = () => {
   const [treeData, setTreeData] = useState([]);
@@ -17,10 +18,60 @@ const VSCodeLayout = () => {
   const [validationState, setValidationState] = useState({ errors: 0, warnings: 0, markers: [] });
   const autoSaveTimeoutRef = useRef(null);
   const editorRef = useRef(null);
+  const socketRef = useRef(null);
+  const suppressLocalChangeRef = useRef(false);
+  const currentFileIdRef = useRef(null);
+  const currentSocketIdRef = useRef(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    const socket = io(API_BASE_URL, {
+      transports: ['websocket'],
+      autoConnect: true
+    });
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      currentSocketIdRef.current = socket.id;
+      console.log('Connected to Socket.IO server');
+    });
+
+    // Listen for content changes from other collaborators
+    socket.on('content_change', ({ fileId, content, fromSocketId }) => {
+      if (!fileId || fileId !== currentFileIdRef.current) return;
+      if (fromSocketId && fromSocketId === currentSocketIdRef.current) return;
+      
+      suppressLocalChangeRef.current = true;
+      setCurrentFile(prev => prev ? { ...prev, content } : prev);
+      console.log('Received content change from collaborator');
+    });
+
+    // Listen for tree updates (file/folder creation)
+    socket.on('tree_updated', (payload) => {
+      console.log('Tree update received:', payload);
+      fetchTree(); // Refresh the file tree
+    });
+
+    // Listen for user join/leave events
+    socket.on('user_joined_file', ({ fileId, userId }) => {
+      console.log(`User ${userId} joined file ${fileId}`);
+    });
+
+    socket.on('user_left_file', ({ fileId, userId }) => {
+      console.log(`User ${userId} left file ${fileId}`);
+    });
+
+    return () => {
+      try {
+        socket.disconnect();
+      } catch (_) {}
+      socketRef.current = null;
+    };
+  }, [API_BASE_URL]);
 
   // Fetch the folder/file tree
   const fetchTree = useCallback(async () => {
@@ -375,7 +426,7 @@ const VSCodeLayout = () => {
         throw new Error(message);
       }
       const blob = await response.blob();
-      triggerBrowserDownload(blob, name || 'file');
+      triggerBrowserDownload(blob, name);
     } catch (error) {
       toast.error(error.message || 'Download failed');
       throw error;
@@ -385,9 +436,26 @@ const VSCodeLayout = () => {
   // Handle file selection
   const handleFileSelect = async (file) => {
     try {
+      // Leave previous file room
+      if (socketRef.current && currentFileIdRef.current) {
+        socketRef.current.emit('leave_file', { 
+          fileId: currentFileIdRef.current, 
+          userId: user?.id || user?._id 
+        });
+      }
+
       const fileWithContent = await fetchFile(file.id);
       setCurrentFile(fileWithContent);
       setHasUnsavedChanges(false);
+
+      // Join new file room for real-time collaboration
+      currentFileIdRef.current = file.id;
+      if (socketRef.current) {
+        socketRef.current.emit('join_file', { 
+          fileId: file.id, 
+          userId: user?.id || user?._id 
+        });
+      }
     } catch (error) {
       toast.error(error.message || 'Failed to load file');
     }
@@ -395,10 +463,26 @@ const VSCodeLayout = () => {
 
   // Handle content change
   const handleContentChange = (content) => {
-    setCurrentFile(prevFile => 
-      prevFile ? { ...prevFile, content } : null
-    );
+    // If this change originated from a remote update, don't echo back
+    if (suppressLocalChangeRef.current) {
+      suppressLocalChangeRef.current = false;
+      setCurrentFile(prevFile => prevFile ? { ...prevFile, content } : null);
+      return;
+    }
+
+    setCurrentFile(prevFile => prevFile ? { ...prevFile, content } : null);
     setHasUnsavedChanges(true);
+
+    // Broadcast change to other collaborators in real-time
+    const fileId = currentFile?.id || currentFile?._id || currentFileIdRef.current;
+    if (socketRef.current && fileId) {
+      socketRef.current.emit('content_change', {
+        fileId,
+        content,
+        version: currentFile?.version,
+        userId: user?.id || user?._id
+      });
+    }
   };
 
   // Toggle folder expansion
@@ -462,6 +546,18 @@ const VSCodeLayout = () => {
     }
   }, [currentFile]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (socketRef.current && currentFileIdRef.current) {
+        socketRef.current.emit('leave_file', { 
+          fileId: currentFileIdRef.current, 
+          userId: user?.id || user?._id 
+        });
+      }
+    };
+  }, [user]);
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', color: 'white' }}>
       {/* Top Navigation Bar */}
@@ -476,7 +572,7 @@ const VSCodeLayout = () => {
         fontSize: '14px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{ fontWeight: 'bold', color: '#cccccc' }}>CodeSync - File Manager</span>
+          <span style={{ fontWeight: 'bold', color: '#cccccc' }}>CodeSync - Collaborative Editor</span>
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -592,113 +688,113 @@ const VSCodeLayout = () => {
       <div style={{ flex: 1, display: 'flex' }}>
         {/* File Explorer Sidebar */}
         <FileExplorer
-        treeData={treeData}
-        expandedFolders={expandedFolders}
-        currentFile={currentFile}
-        isLoading={isLoading}
-        onFileSelect={handleFileSelect}
-        onToggleFolder={toggleFolder}
-        onCreateFile={createFile}
-        onCreateFolder={createFolder}
-        onDeleteFile={deleteFile}
-        onDeleteFolder={deleteFolder}
-        onRenameFile={renameFile}
-        onRenameFolder={renameFolder}
-        onRefresh={fetchTree}
-        onDownloadAll={downloadAllAsZip}
-        onDownloadItem={async (item) => {
-          if (item.type === 'folder') {
-            await downloadFolderAsZip(item.id, item.name);
-          } else {
-            await downloadSingleFile(item.id, item.name);
-          }
-        }}
-      />
+          treeData={treeData}
+          expandedFolders={expandedFolders}
+          currentFile={currentFile}
+          isLoading={isLoading}
+          onFileSelect={handleFileSelect}
+          onToggleFolder={toggleFolder}
+          onCreateFile={createFile}
+          onCreateFolder={createFolder}
+          onDeleteFile={deleteFile}
+          onDeleteFolder={deleteFolder}
+          onRenameFile={renameFile}
+          onRenameFolder={renameFolder}
+          onRefresh={fetchTree}
+          onDownloadAll={downloadAllAsZip}
+          onDownloadItem={async (item) => {
+            if (item.type === 'folder') {
+              await downloadFolderAsZip(item.id, item.name);
+            } else {
+              await downloadSingleFile(item.id, item.name);
+            }
+          }}
+        />
 
-      {/* Editor Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {currentFile ? (
-          <>
-            {/* File Tab */}
+        {/* Editor Area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {currentFile ? (
+            <>
+              {/* File Tab */}
+              <div style={{
+                height: '40px',
+                backgroundColor: '#2d2d30',
+                borderBottom: '1px solid #3e3e42',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingLeft: '16px',
+                paddingRight: '16px'
+              }}>
+                <span style={{ fontSize: '14px', color: 'white' }}>
+                  {currentFile.name}
+                  {hasUnsavedChanges && <span style={{ color: '#ff9500', marginLeft: '4px' }}>●</span>}
+                </span>
+                <div>
+                  <button
+                    onClick={() => downloadSingleFile(currentFile.id || currentFile._id, currentFile.name)}
+                    style={{
+                      backgroundColor: '#404040',
+                      border: 'none',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                    onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
+                    onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
+                    title="Download this file"
+                  >
+                    ⬇️ Download
+                  </button>
+                </div>
+                
+                {/* Validation Status */}
+                {(validationState.errors > 0 || validationState.warnings > 0) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+                    {validationState.errors > 0 && (
+                      <span style={{ color: '#f85149', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '10px' }}>●</span>
+                        {validationState.errors}
+                      </span>
+                    )}
+                    {validationState.warnings > 0 && (
+                      <span style={{ color: '#ff9500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '10px' }}>●</span>
+                        {validationState.warnings}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Syntax Aware Editor */}
+              <div style={{ flex: 1 }}>
+                <SyntaxAwareEditor
+                  value={currentFile.content}
+                  onChange={handleContentChange}
+                  language={getLanguageFromExtension(currentFile.name)}
+                  theme="vs-dark"
+                  onValidationChange={setValidationState}
+                  ref={editorRef}
+                />
+              </div>
+            </>
+          ) : (
             <div style={{
-              height: '40px',
-              backgroundColor: '#2d2d30',
-              borderBottom: '1px solid #3e3e42',
+              flex: 1,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingLeft: '16px',
-              paddingRight: '16px'
+              justifyContent: 'center',
+              flexDirection: 'column'
             }}>
-              <span style={{ fontSize: '14px', color: 'white' }}>
-                {currentFile.name}
-                {hasUnsavedChanges && <span style={{ color: '#ff9500', marginLeft: '4px' }}>●</span>}
-              </span>
-              <div>
-                <button
-                  onClick={() => downloadSingleFile(currentFile.id || currentFile._id, currentFile.name)}
-                  style={{
-                    backgroundColor: '#404040',
-                    border: 'none',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                  onMouseEnter={(e) => { e.target.style.backgroundColor = '#505050'; }}
-                  onMouseLeave={(e) => { e.target.style.backgroundColor = '#404040'; }}
-                  title="Download this file"
-                >
-                  ⬇️ Download
-                </button>
-              </div>
-              
-              {/* Validation Status */}
-              {(validationState.errors > 0 || validationState.warnings > 0) && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
-                  {validationState.errors > 0 && (
-                    <span style={{ color: '#f85149', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '10px' }}>●</span>
-                      {validationState.errors}
-                    </span>
-                  )}
-                  {validationState.warnings > 0 && (
-                    <span style={{ color: '#ff9500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '10px' }}>●</span>
-                      {validationState.warnings}
-                    </span>
-                  )}
-                </div>
-              )}
+              <div style={{ fontSize: '4rem', marginBottom: '16px' }}>📁</div>
+              <h3 style={{ color: '#888', margin: 0 }}>No file selected</h3>
+              <p style={{ color: '#666', margin: '8px 0 0 0' }}>Select a file from the explorer to start editing</p>
             </div>
-
-            {/* Syntax Aware Editor */}
-            <div style={{ flex: 1 }}>
-              <SyntaxAwareEditor
-                value={currentFile.content}
-                onChange={handleContentChange}
-                language={getLanguageFromExtension(currentFile.name)}
-                theme="vs-dark"
-                onValidationChange={setValidationState}
-                ref={editorRef}
-              />
-            </div>
-          </>
-        ) : (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column'
-          }}>
-            <div style={{ fontSize: '4rem', marginBottom: '16px' }}>📁</div>
-            <h3 style={{ color: '#888', margin: 0 }}>No file selected</h3>
-            <p style={{ color: '#666', margin: '8px 0 0 0' }}>Select a file from the explorer to start editing</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
 
       {/* Message Panel */}
@@ -1220,7 +1316,6 @@ const FileExplorer = ({
           </div>
         </div>
       )}
-
     </div>
   );
 };

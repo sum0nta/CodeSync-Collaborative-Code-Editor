@@ -43,6 +43,22 @@ async function createFile(req, res) {
 
     await userFile.save();
 
+    // Broadcast tree update for real-time collaboration
+    try {
+      const io = req.app?.get('io');
+      if (io) {
+        io.emit('tree_updated', { 
+          type: 'file_created', 
+          fileId: file._id.toString(), 
+          parentFolderId: file.parentFolderId || null, 
+          name: file.name 
+        });
+        console.log('Tree update broadcasted for file creation');
+      }
+    } catch (error) {
+      console.error('Error broadcasting tree update:', error);
+    }
+
     return res.status(201).json({
       message: 'File created successfully',
       file: {
@@ -89,6 +105,22 @@ async function createFolder(req, res) {
     });
 
     await folder.save();
+
+    // Broadcast tree update for real-time collaboration
+    try {
+      const io = req.app?.get('io');
+      if (io) {
+        io.emit('tree_updated', { 
+          type: 'folder_created', 
+          folderId: folder._id.toString(), 
+          parentFolderId: folder.parentFolderId || null, 
+          name: folder.name 
+        });
+        console.log('Tree update broadcasted for folder creation');
+      }
+    } catch (error) {
+      console.error('Error broadcasting tree update:', error);
+    }
 
     return res.status(201).json({
       message: 'Folder created successfully',
