@@ -34,6 +34,15 @@ app.use(express.json());
 // MongoDB Connection
 connectToDatabase().catch((err) => console.error('MongoDB connection error:', err));
 
+// Health check endpoint for Railway
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
