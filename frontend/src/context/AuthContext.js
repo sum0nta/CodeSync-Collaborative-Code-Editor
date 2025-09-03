@@ -16,10 +16,9 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
-  console.log('Current API_BASE_URL:', API_BASE_URL);
-  console.log('Environment:', process.env.NODE_ENV);
-  console.log('REACT_APP_BACKEND_URL:', process.env.REACT_APP_BACKEND_URL);
+  // Force the Railway URL in production
+  const API_BASE_URL = 'https://codesync-collaborative-code-editor-production.up.railway.app';
+  console.log('Using API_BASE_URL:', API_BASE_URL);
 
   // Tiny inline presence helpers (keep code together here)
   const presenceOnline = async (authToken) => {
@@ -90,7 +89,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const url = `${API_BASE_URL}/api/auth/login`;
+      console.log('Attempting login with URL:', url);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
