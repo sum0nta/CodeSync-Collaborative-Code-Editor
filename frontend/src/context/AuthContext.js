@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Force the Railway URL in production
-  const API_BASE_URL = 'https://codesync-collaborative-code-editor-production.up.railway.app';
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'https://codesync-collaborative-code-editor-production.up.railway.app';
   console.log('Using API_BASE_URL:', API_BASE_URL);
 
   // Tiny inline presence helpers (keep code together here)
