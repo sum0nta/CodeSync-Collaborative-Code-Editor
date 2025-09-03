@@ -27,7 +27,9 @@ const AIAssistant = ({ isOpen, onClose, currentFile, onCodeInsert }) => {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+  const API_BASE_URL = process.env.NODE_ENV === 'production' 
+    ? '' // Use relative URLs in production (Vercel) so API proxy can handle routing
+    : (process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001');
 
   // Helper function to handle Ollama errors
   const handleOllamaError = (errorMessage) => {

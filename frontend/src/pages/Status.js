@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '' // Use relative URLs in production (Vercel) so API proxy can handle routing
+  : (process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001');
 
 export default function Status() {
   const { user } = useAuth();
