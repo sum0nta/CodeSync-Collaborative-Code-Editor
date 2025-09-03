@@ -118,23 +118,6 @@ export const AuthProvider = ({ children }) => {
         message: error.response?.data?.message || 'Login failed'
       };
     }
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.token);
-        setToken(data.token);
-        setUser(data.user);
-        // Mark online immediately
-        presenceOnline(data.token);
-        return { success: true, data };
-      } else {
-        return { success: false, message: data.message };
-      }
-    } catch (error) {
-      return { success: false, message: 'Network error' };
-    }
   };
 
   const register = async (username, email, password, hometown, favoriteAnimal, dateOfBirth) => {
