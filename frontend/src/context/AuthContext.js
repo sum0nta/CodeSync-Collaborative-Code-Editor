@@ -14,11 +14,14 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 
   // Tiny inline presence helpers (keep code together here)
   const presenceOnline = async (authToken) => {
     try {
-      await fetch('http://localhost:5001/api/presence/online', {
+      await fetch(`${API_BASE_URL}/api/presence/online`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -33,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const presenceOffline = async (authToken, { keepalive = false } = {}) => {
     try {
-      await fetch('http://localhost:5001/api/presence/offline', {
+      await fetch(`${API_BASE_URL}/api/presence/offline`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -58,7 +61,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -84,7 +87,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,7 +114,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password, hometown, favoriteAnimal, dateOfBirth) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -135,7 +138,7 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/reset-password', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -157,7 +160,7 @@ export const AuthProvider = ({ children }) => {
 
   const verifySecurityQuestions = async (email, hometown, favoriteAnimal, dateOfBirth) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/verify-security-questions', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-security-questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -179,7 +182,7 @@ export const AuthProvider = ({ children }) => {
 
   const resetPasswordConfirm = async (resetToken, newPassword) => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/reset-password-confirm', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/reset-password-confirm`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -225,7 +228,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -249,7 +252,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUserInfo = async (userData) => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/info', {
+      const response = await fetch(`${API_BASE_URL}/api/user/info`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -273,7 +276,7 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/password', {
+      const response = await fetch(`${API_BASE_URL}/api/user/password`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
