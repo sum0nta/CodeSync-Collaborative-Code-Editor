@@ -39,5 +39,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "proxy": "https://codesync-collaborative-code-editor-production.up.railway.app"
 }

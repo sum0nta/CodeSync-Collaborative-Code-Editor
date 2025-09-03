@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -89,15 +90,34 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const url = `${API_BASE_URL}/api/auth/login`;
-      console.log('Attempting login with URL:', url);
+      console.log('Login attempt:', { API_BASE_URL, email });
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
+      const response = await axios({
+        method: 'post',
+        url: `${API_BASE_URL}/api/auth/login`,
+        data: { email, password },
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true
+      });
+
+      const data = response.data;
+      
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        setToken(data.token);
+        setUser(data.user);
+        presenceOnline(data.token);
+        return { success: true, data };
+      }
+      
+      return { success: false, message: data.message };
+    } catch (error) {
+      console.error('Login error:', error.response || error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed'
+      };
+    }
       });
 
       const data = await response.json();
