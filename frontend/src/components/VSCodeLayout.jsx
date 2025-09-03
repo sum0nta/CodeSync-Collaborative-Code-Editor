@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useFont } from '../context/FontContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL, getWSUrl } from '../utils/config';
+import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import MessagePanel from './MessagePanel';
 import SyntaxAwareEditor from './SyntaxAwareEditor';
@@ -36,15 +38,17 @@ const VSCodeLayout = () => {
   const { setCurrentFile: setFontCurrentFile } = useFont();
   const navigate = useNavigate();
 
-  const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? '' // Use relative URLs in production (Vercel) so API proxy can handle routing
-    : (process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001');
-
   // Initialize Socket.IO connection
   useEffect(() => {
-    const socket = io(API_BASE_URL, {
+    const wsUrl = getWSUrl();
+    console.log('Connecting to WebSocket at:', wsUrl);
+    const socket = io(wsUrl, {
       transports: ['websocket'],
-      autoConnect: true
+      autoConnect: true,
+      withCredentials: true,
+      extraHeaders: {
+        'Access-Control-Allow-Origin': '*'
+      }
     });
     socketRef.current = socket;
 
@@ -96,20 +100,15 @@ const VSCodeLayout = () => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/tree`, {
+      const { data } = await axios.get(`${API_BASE_URL}/api/tree`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        withCredentials: true
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setTreeData(data.tree || []);
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.message || 'Failed to fetch files');
-      }
+      setTreeData(data.tree || []);
     } catch (error) {
       console.error('Error fetching tree:', error);
       toast.error('Network error while fetching files');
