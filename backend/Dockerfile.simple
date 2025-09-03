@@ -1,14 +1,15 @@
-# Use the official Ollama image as base
-FROM ollama/ollama:latest
+# Simple single-stage build for Railway
+FROM node:18-slim
 
-# Install Node.js and npm
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
-    gnupg \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean \
+    wget \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Ollama
+RUN wget -O /usr/local/bin/ollama https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64 \
+    && chmod +x /usr/local/bin/ollama
 
 # Set working directory
 WORKDIR /app
