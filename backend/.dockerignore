@@ -10,3 +10,6 @@ README.md
 .DS_Store
 .vscode
 .idea
+
+# Keep package-lock.json for npm ci
+!package-lock.json
