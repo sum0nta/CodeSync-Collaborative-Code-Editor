@@ -29,12 +29,28 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['https://code-sync-collaborative-code-editor.vercel.app', 'http://localhost:3000'],
+  origin: [
+    'https://codesync-collaborative-code-editor.onrender.com',
+    'http://localhost:3000'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  exposedHeaders: ['Access-Control-Allow-Origin']
 }));
 app.use(express.json());
+
+// Additional headers for CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://codesync-collaborative-code-editor.onrender.com');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
 // MongoDB Connection
 connectToDatabase().catch((err) => console.error('MongoDB connection error:', err));
@@ -64,8 +80,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: ['https://codesync-collaborative-code-editor.onrender.com', 'http://localhost:3000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
   }
 });
 
