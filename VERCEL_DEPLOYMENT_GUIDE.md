@@ -109,7 +109,7 @@ ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://your-railway-backend.railway.app/api/$1"
+      "dest": "codesync-collaborative-code-editor-production.up.railway.app"
     },
     {
       "src": "/(.*)",

@@ -3,6 +3,11 @@
   "outputDirectory": "build",
   "installCommand": "npm install",
   "framework": "create-react-app",
+  "functions": {
+    "api/**/*": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "env": {
     "REACT_APP_BACKEND_URL": "https://codesync-collaborative-code-editor-production.up.railway.app"
   }
