@@ -27,12 +27,24 @@ const codeExecutionRoutes = require('./routes/codeExecutionRoutes');
 
 const app = express();
 
-// Middleware
+// CORS Configuration - Supports multiple frontend URLs
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'http://localhost:3001'
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-  origin: [
-    'https://codesync-collaborative-code-editor.onrender.com',
-    'http://localhost:3000'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(allowed => origin?.includes(allowed))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // For development, allow all origins. Remove in production if needed.
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -42,7 +54,10 @@ app.use(express.json());
 
 // Additional headers for CORS
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://codesync-collaborative-code-editor.onrender.com');
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -80,7 +95,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ['https://codesync-collaborative-code-editor.onrender.com', 'http://localhost:3000'],
+    origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']

@@ -1,0 +1,35 @@
+# This file helps with deployment tracking
+# No actual CI/CD - just documentation for deployment services
+
+name: Deployment Info
+on: [push]
+
+# Deployment is handled by:
+# - Vercel (Frontend) - Auto-deploys from main branch
+# - Render (Backend) - Auto-deploys from main branch
+
+# Environment Variables Required:
+# Backend (Render):
+#   - NODE_ENV=production
+#   - PORT=10000
+#   - MONGODB_URI=<your-mongodb-atlas-connection-string>
+#   - JWT_SECRET=<random-64-char-string>
+#   - FRONTEND_URL=<your-vercel-url>
+#   - GOOGLE_AI_API_KEY=<optional-google-ai-key>
+
+# Frontend (Vercel):
+#   - REACT_APP_BACKEND_URL=<your-render-backend-url>
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Information
+        run: |
+          echo "This repository uses external deployment services"
+          echo "Frontend: Vercel - https://vercel.com"
+          echo "Backend: Render - https://render.com"
+          echo "Database: MongoDB Atlas - https://www.mongodb.com/cloud/atlas"
+          echo ""
+          echo "See QUICK_DEPLOY.md for deployment instructions"
+

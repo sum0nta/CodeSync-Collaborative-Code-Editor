@@ -1,6 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
+
+// Use Gemini AI service for production (free API)
+// Falls back to Ollama for local development
+const useGemini = process.env.GOOGLE_AI_API_KEY ? true : false;
+if (useGemini) {
+  console.log('✅ Using Google AI Studio (Gemini) for AI features');
+} else {
+  console.log('ℹ️  No GOOGLE_AI_API_KEY found. AI features will use Ollama (local only)');
+}
 const { authenticateToken } = require('../helper/authMiddleware');
 
 // Apply authentication middleware to all AI routes

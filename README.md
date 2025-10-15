@@ -13,11 +13,14 @@ A real-time collaborative code editor with built-in AI assistance and code execu
 - Syntax highlighting and error detection
 
 ### AI Assistant ✅
-- Google AI Studio (Gemini 1.5 Pro) integration
+- **Production**: Google AI Studio (Gemini) - FREE API, no hosting needed!
+- **Local Dev**: Ollama support (optional)
 - Code generation and analysis
 - Intelligent error detection and fixing
 - Code explanation and documentation
 - Interactive chat interface
+
+**Note:** Ollama cannot run on free cloud hosting (needs 4-8GB RAM). Use Google Gemini API instead (FREE, already integrated). See [AI_SETUP_GUIDE.md](./AI_SETUP_GUIDE.md).
 
 ### Code Management ✅
 - Monaco Editor integration
@@ -31,12 +34,27 @@ A real-time collaborative code editor with built-in AI assistance and code execu
 - **Frontend**: React.js, Monaco Editor
 - **Backend**: Node.js, Express.js
 - **Database**: MongoDB
-- **Real-time**: WebSocket
+- **Real-time**: WebSocket (Socket.IO)
 - **AI**: Google AI Studio (Gemini 1.5 Pro)
 - **Authentication**: JWT
-- **Deployment**: Render.com
+- **Deployment**: Vercel (Frontend) + Render.com (Backend) + MongoDB Atlas (Database)
 
-## Quick Start
+## 🚀 Quick Deploy (FREE!)
+
+Deploy your own instance in 15 minutes:
+
+1. **Quick Start**: Follow [QUICK_DEPLOY.md](./QUICK_DEPLOY.md) - Simple 3-step guide
+2. **Detailed Guide**: See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Comprehensive instructions
+3. **Checklist**: Print [deploy-checklist.txt](./deploy-checklist.txt) - Step-by-step checklist
+
+**Free Hosting Stack:**
+- Frontend: Vercel (free tier)
+- Backend: Render.com (free tier)
+- Database: MongoDB Atlas (free tier)
+
+---
+
+## 💻 Local Development
 
 1. Clone and install:
    ```bash
@@ -116,6 +134,37 @@ A real-time collaborative code editor with built-in AI assistance and code execu
 - Code formatting
 - Auto-completion
 
-## License
+## 🏗️ Architecture
+
+See [DEPLOYMENT_ARCHITECTURE.md](./DEPLOYMENT_ARCHITECTURE.md) for detailed system architecture and data flow.
+
+---
+
+## 📚 Documentation
+
+- **[START_HERE.md](./START_HERE.md)** - New to the project? Start here!
+- **[QUICK_DEPLOY.md](./QUICK_DEPLOY.md)** - 15-minute deployment guide
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Comprehensive deployment instructions
+- **[deploy-checklist.txt](./deploy-checklist.txt)** - Printable deployment checklist
+- **[DEPLOYMENT_URLS.md](./DEPLOYMENT_URLS.md)** - Track your deployment URLs
+- **[DEPLOYMENT_ARCHITECTURE.md](./DEPLOYMENT_ARCHITECTURE.md)** - System architecture details
+- **[AI_SETUP_GUIDE.md](./AI_SETUP_GUIDE.md)** - Setup AI features (Gemini vs Ollama)
+- **[FREE_AI_ALTERNATIVES.md](./FREE_AI_ALTERNATIVES.md)** - Free AI API options
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
 
 MIT

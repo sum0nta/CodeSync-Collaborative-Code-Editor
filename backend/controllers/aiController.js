@@ -1,4 +1,13 @@
-const aiService = require('../services/aiService');
+// Auto-select AI service based on environment
+// Priority: Google Gemini (production) > Ollama (local development)
+let aiService;
+if (process.env.GOOGLE_AI_API_KEY) {
+  console.log('🤖 Loading Google AI Studio (Gemini) service...');
+  aiService = require('../services/aiService.gemini');
+} else {
+  console.log('🤖 Loading Ollama service (local development only)...');
+  aiService = require('../services/aiService');
+}
 
 // Generate code based on user prompt
 const generateCode = async (req, res) => {
