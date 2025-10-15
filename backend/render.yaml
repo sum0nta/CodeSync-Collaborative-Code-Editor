@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node index.js
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
@@ -17,5 +17,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: GOOGLE_AI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
         sync: false
 
